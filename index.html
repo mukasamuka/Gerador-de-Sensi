@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KING FF - Gerador de Sensibilidade</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Rajdhani:wght@400;600;700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{
+  --red:#e02020;
+  --red2:#ff3333;
+  --dark:#0a0a0a;
+  --card:#1a1a1a;
+  --card2:#141414;
+  --text:#fff;
+  --muted:#888;
+  --border:#2a2a2a;
+}
+body{
+  font-family:'Rajdhani',sans-serif;
+  background:var(--dark);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  position:relative;
+}
+.bg-canvas{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none;}
+.bg-canvas canvas{position:absolute;inset:0;width:100%;height:100%;}
+.bg-overlay{
+  position:fixed;inset:0;z-index:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%,rgba(180,10,10,0.18) 0%,transparent 70%),
+    radial-gradient(ellipse 60% 40% at 20% 80%,rgba(120,0,0,0.12) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 50% at 80% 50%,rgba(200,30,30,0.08) 0%,transparent 60%);
+  pointer-events:none;
+}
+.app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:0 0 40px;min-height:100vh;}
+.header{display:flex;justify-content:flex-end;padding:16px 20px;}
+.menu-btn{
+  width:44px;height:44px;border-radius:50%;
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;backdrop-filter:blur(8px);
+}
+.menu-btn svg{stroke:#fff;fill:none;width:20px;height:20px;}
+.logo-section{text-align:center;padding:20px 20px 0;animation:fadeDown 0.6s ease both;}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-20px);}to{opacity:1;transform:translateY(0);}}
+.logo-row{display:flex;align-items:center;justify-content:center;gap:14px;margin-bottom:6px;}
+.crosshair{width:32px;height:32px;position:relative;flex-shrink:0;}
+.crosshair::before,.crosshair::after{content:'';position:absolute;background:var(--red);border-radius:2px;}
+.crosshair::before{width:2px;height:100%;left:50%;top:0;transform:translateX(-50%);}
+.crosshair::after{width:100%;height:2px;top:50%;left:0;transform:translateY(-50%);}
+.crosshair-circle{position:absolute;inset:3px;border:2px solid var(--red);border-radius:50%;}
+.logo-text{font-family:'Bebas Neue',sans-serif;font-size:clamp(30px,8vw,42px);letter-spacing:4px;line-height:1;}
+.logo-text span.red{color:var(--red);}
+.logo-subtitle{
+  font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:5px;color:var(--muted);
+  text-transform:uppercase;position:relative;display:inline-block;padding:0 16px;
+}
+.logo-subtitle::before,.logo-subtitle::after{content:'';position:absolute;top:50%;width:30px;height:1px;background:var(--red);}
+.logo-subtitle::before{right:100%;margin-right:-16px;}
+.logo-subtitle::after{left:100%;margin-left:-16px;}
+.progress-dots{display:flex;justify-content:center;gap:8px;padding:20px 0 10px;}
+.dot{width:28px;height:3px;border-radius:2px;background:var(--border);transition:background 0.3s;}
+.dot.active{background:var(--red);}
+.page-title{text-align:center;padding:10px 20px 4px;animation:fadeUp 0.5s ease both 0.1s;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px);}to{opacity:1;transform:translateY(0);}}
+.page-title h2{font-family:'Bebas Neue',sans-serif;font-size:clamp(26px,7vw,36px);letter-spacing:2px;}
+.page-title h2 span.red{color:var(--red);}
+.page-title p{font-size:11px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-top:4px;}
+.page-content{padding:16px 20px;animation:fadeUp 0.5s ease both 0.15s;}
+.page{display:none;}
+.page.active{display:block;}
+.device-btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;}
+.device-btn{
+  background:var(--card);border:2px solid var(--border);border-radius:16px;padding:24px 12px;
+  cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:10px;transition:all 0.25s;
+  color:var(--muted);font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;user-select:none;
+}
+.device-btn svg{width:36px;height:36px;transition:fill 0.25s,stroke 0.25s;}
+.device-btn:hover{border-color:rgba(224,32,32,0.4);color:#fff;}
+.device-btn.selected{
+  border-color:var(--red);background:rgba(224,32,32,0.08);color:var(--red);
+  box-shadow:0 0 20px rgba(224,32,32,0.2) inset,0 0 16px rgba(224,32,32,0.1);
+}
+.device-btn.selected svg{fill:var(--red);stroke:var(--red);}
+.input-wrap{
+  background:var(--card);border:1.5px solid var(--border);border-radius:14px;
+  display:flex;align-items:center;gap:12px;padding:14px 16px;margin-bottom:16px;transition:border-color 0.2s;
+}
+.input-wrap:focus-within{border-color:var(--red);}
+.input-wrap .crosshair-sm{width:20px;height:20px;flex-shrink:0;position:relative;}
+.input-wrap .crosshair-sm::before,.input-wrap .crosshair-sm::after{content:'';position:absolute;background:var(--red);border-radius:1px;}
+.input-wrap .crosshair-sm::before{width:1.5px;height:100%;left:50%;top:0;transform:translateX(-50%);}
+.input-wrap .crosshair-sm::after{width:100%;height:1.5px;top:50%;left:0;transform:translateY(-50%);}
+.input-wrap .crosshair-sm-circle{position:absolute;inset:2px;border:1.5px solid var(--red);border-radius:50%;}
+.input-wrap input{flex:1;background:transparent;border:none;outline:none;color:var(--text);font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:600;}
+.input-wrap input::placeholder{color:var(--muted);}
+.btn-primary{
+  width:100%;padding:17px;background:var(--red);border:none;border-radius:50px;color:#fff;
+  font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:3px;
+  text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  gap:10px;transition:all 0.2s;margin-top:4px;
+}
+.btn-primary:hover{background:#c41a1a;transform:translateY(-1px);box-shadow:0 8px 24px rgba(224,32,32,0.3);}
+.btn-primary:active{transform:translateY(0);}
+.btn-secondary{
+  flex:1;padding:16px;background:var(--card);border:1.5px solid var(--border);border-radius:50px;
+  color:var(--text);font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;
+  letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;
+}
+.btn-secondary:hover{border-color:#555;}
+.btn-row{display:flex;gap:12px;margin-top:6px;}
+
+/* OPÇÕES */
+.option-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+.options-section-label{
+  font-size:10px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;
+  padding:6px 2px 2px;font-weight:700;border-top:1px solid var(--border);margin-top:4px;
+}
+.options-section-label:first-child{border-top:none;margin-top:0;}
+.option-item{
+  background:var(--card);border:1.5px solid var(--border);border-radius:14px;
+  padding:16px 18px;display:flex;align-items:center;gap:14px;cursor:pointer;
+  transition:all 0.2s;user-select:none;
+}
+.option-item:hover{border-color:rgba(224,32,32,0.3);}
+.option-item.checked{border-color:var(--red);background:rgba(224,32,32,0.05);}
+.radio-circle{
+  width:22px;height:22px;border-radius:50%;border:2px solid var(--border);
+  flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all 0.2s;
+}
+.option-item.checked .radio-circle{border-color:var(--red);background:var(--red);}
+.option-item.checked .radio-circle::after{content:'';width:8px;height:8px;background:#fff;border-radius:50%;}
+.option-text{flex:1;}
+.option-text strong{display:block;font-weight:700;font-size:15px;letter-spacing:0.5px;}
+.option-text small{font-size:12px;color:var(--muted);}
+
+/* RESULTADO */
+.result-card{
+  background:var(--card2);border:1.5px solid var(--border);border-radius:18px;
+  padding:20px 20px;margin-bottom:16px;
+  animation:popIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+}
+@keyframes popIn{from{opacity:0;transform:scale(0.92);}to{opacity:1;transform:scale(1);}}
+.result-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 0;border-bottom:1px solid var(--border);
+}
+.result-row:last-child{border-bottom:none;}
+.result-label{font-size:12px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;min-width:100px;}
+.result-val{font-family:'Bebas Neue',sans-serif;font-size:26px;color:#fff;letter-spacing:1px;}
+.result-bar-wrap{flex:1;margin:0 14px;height:3px;background:var(--border);border-radius:2px;overflow:hidden;}
+.result-bar{height:100%;border-radius:2px;background:linear-gradient(90deg,var(--red),var(--red2));animation:barFill 0.8s cubic-bezier(0.25,1,0.5,1) both;}
+@keyframes barFill{from{width:0;}to{width:var(--w);}}
+
+/* BADGE */
+.sens-type-badge{
+  display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;
+  font-weight:700;letter-spacing:2px;text-transform:uppercase;margin-left:8px;
+}
+.badge-leve{background:rgba(34,197,94,0.15);color:#22c55e;border:1px solid rgba(34,197,94,0.3);}
+.badge-pesada{background:rgba(224,32,32,0.15);color:var(--red);border:1px solid rgba(224,32,32,0.3);}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--red);color:#fff;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;
+  letter-spacing:1px;padding:12px 24px;border-radius:50px;z-index:1000;
+  transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1);white-space:nowrap;
+}
+.toast.show{transform:translateX(-50%) translateY(0);}
+
+/* ERROS */
+.field-error{font-size:12px;color:var(--red);letter-spacing:1px;margin-top:-10px;margin-bottom:8px;padding-left:4px;display:none;}
+.field-error.show{display:block;}
+
+/* BTN DOWNLOAD */
+.btn-download{
+  width:100%;padding:16px;
+  background:linear-gradient(135deg,#181818,#1e1e1e);
+  border:1.5px solid #3a3a3a;border-radius:50px;color:#ddd;
+  font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;
+  text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  gap:10px;transition:all 0.2s;margin-top:10px;
+}
+.btn-download:hover{border-color:var(--red);color:#fff;box-shadow:0 0 18px rgba(224,32,32,0.2);transform:translateY(-1px);}
+.btn-download:active{transform:translateY(0);}
+
+/* TELA LOGIN */
+#loginScreen{
+  position:fixed;inset:0;z-index:999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:24px;background:var(--dark);
+}
+#loginScreen::before{
+  content:'';position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%,rgba(180,10,10,0.18) 0%,transparent 70%),
+    radial-gradient(ellipse 60% 40% at 20% 80%,rgba(120,0,0,0.12) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 50% at 80% 50%,rgba(200,30,30,0.08) 0%,transparent 60%);
+  pointer-events:none;z-index:0;
+}
+#loginScreen .login-box{position:relative;z-index:1;}
+.login-box{width:100%;max-width:360px;text-align:center;animation:fadeDown 0.7s cubic-bezier(0.34,1.56,0.64,1) both;}
+.login-logo-title{
+  font-family:'Bebas Neue',sans-serif;font-size:clamp(64px,18vw,88px);letter-spacing:8px;
+  line-height:1;color:#fff;text-shadow:0 0 40px rgba(224,32,32,0.5),0 0 80px rgba(224,32,32,0.2);
+}
+.login-sub{font-family:'Rajdhani',sans-serif;font-size:11px;letter-spacing:5px;color:var(--muted);text-transform:uppercase;margin-top:2px;margin-bottom:40px;}
+.login-input-wrap{
+  background:var(--card);border:1.5px solid var(--border);border-radius:14px;
+  display:flex;align-items:center;gap:10px;padding:16px 18px;margin-bottom:10px;transition:border-color 0.2s;
+}
+.login-input-wrap:focus-within{border-color:var(--red);}
+.login-input-wrap input{
+  flex:1;background:transparent;border:none;outline:none;color:var(--text);
+  font-family:'Rajdhani',sans-serif;font-size:22px;font-weight:700;letter-spacing:6px;
+  -webkit-text-security:disc;text-security:disc;
+}
+.login-input-wrap input::placeholder{color:var(--muted);letter-spacing:1px;font-size:14px;font-weight:600;-webkit-text-security:none;text-security:none;}
+.login-key-icon{flex-shrink:0;opacity:0.7;}
+.login-msg{font-family:'Rajdhani',sans-serif;font-size:13px;letter-spacing:2px;min-height:20px;margin-bottom:14px;font-weight:700;text-transform:uppercase;}
+.login-msg.erro{color:var(--red);}
+.login-msg.info{color:var(--muted);}
+.login-msg.sucesso{color:#22c55e;}
+.login-btn{
+  width:100%;padding:17px;background:var(--red);border:none;border-radius:50px;color:#fff;
+  font-family:'Rajdhani',sans-serif;font-size:15px;font-weight:700;letter-spacing:4px;
+  text-transform:uppercase;cursor:pointer;transition:all 0.2s;
+}
+.login-btn:hover{background:#c41a1a;transform:translateY(-1px);box-shadow:0 8px 24px rgba(224,32,32,0.35);}
+.login-btn:active{transform:translateY(0);}
+.login-shake{animation:shake 0.4s ease both;}
+@keyframes shake{
+  0%,100%{transform:translateX(0);}
+  20%{transform:translateX(-8px);}
+  40%{transform:translateX(8px);}
+  60%{transform:translateX(-6px);}
+  80%{transform:translateX(6px);}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-canvas" id="bgCanvas">
+  <canvas id="particleCanvas"></canvas>
+</div>
+<div class="bg-overlay"></div>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <canvas id="loginCanvas" style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;"></canvas>
+  <div class="login-box">
+    <div class="login-logo-title">KING</div>
+    <div class="login-sub">gerador de sensibilidade</div>
+    <div class="login-input-wrap" id="loginInputWrap">
+      <svg class="login-key-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e02020" stroke-width="2.2">
+        <circle cx="7.5" cy="15.5" r="5.5"/><path d="m21 2-9.6 9.6M15.5 7.5l3 3"/>
+      </svg>
+      <input type="password" id="keyInput" placeholder="Coloque sua key de acesso" oninput="onKeyInput()" onkeydown="if(event.key==='Enter')verificarKey()" autocomplete="off" autocorrect="off" spellcheck="false">
+    </div>
+    <div class="login-msg info" id="loginMsg"></div>
+    <button class="login-btn" onclick="verificarKey()">ACESSAR</button>
+  </div>
+</div>
+
+<div class="app" id="mainApp" style="display:none;">
+  <div class="header">
+    <div style="position:relative;">
+      <div class="menu-btn" onclick="toggleMenu()">
+        <svg viewBox="0 0 24 24" stroke-width="2"><line x1="3" y1="7" x2="21" y2="7"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="17" x2="21" y2="17"/></svg>
+      </div>
+      <div id="dropMenu" style="display:none;position:absolute;right:0;top:52px;background:#1a1a1a;border:1.5px solid #2a2a2a;border-radius:12px;overflow:hidden;min-width:170px;z-index:100;box-shadow:0 8px 32px rgba(0,0,0,0.6);">
+        <div onclick="voltarInicio()" style="padding:14px 20px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:700;font-size:14px;letter-spacing:1px;color:#fff;display:flex;align-items:center;gap:10px;" onmouseover="this.style.background='rgba(224,32,32,0.12)'" onmouseout="this.style.background='transparent'">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#e02020" stroke-width="2.5"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          Voltar ao Início
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="logo-section">
+    <div class="logo-row">
+      <div class="crosshair"><div class="crosshair-circle"></div></div>
+      <div class="logo-text">KING <span class="red">FF</span></div>
+      <div class="crosshair"><div class="crosshair-circle"></div></div>
+    </div>
+    <div class="logo-subtitle">Motor de Sensibilidade</div>
+    <div style="margin-top:10px;font-size:10px;letter-spacing:2px;color:#22c55e;font-weight:700;text-transform:uppercase;">● Calibrado para a OB55 (Set/2026)</div>
+  </div>
+
+  <div class="progress-dots">
+    <div class="dot active" id="dot1"></div>
+    <div class="dot" id="dot2"></div>
+    <div class="dot" id="dot3"></div>
+  </div>
+
+  <!-- PÁGINA 1 -->
+  <div class="page active" id="page1">
+    <div class="page-title">
+      <h2>SELECIONE SEU <span class="red">EQUIPAMENTO</span></h2>
+      <p>Otimizado p/ seu hardware · versão OB55</p>
+    </div>
+    <div class="page-content">
+      <div class="device-btns">
+        <button class="device-btn" id="btnAndroid" onclick="selectDevice('android')">
+          <svg viewBox="0 0 24 24" fill="var(--muted)"><path d="M6 18c0 .55.45 1 1 1h1v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h2v3.5c0 .83.67 1.5 1.5 1.5s1.5-.67 1.5-1.5V19h1c.55 0 1-.45 1-1V8H6v10zm-2.5-1C2.67 17 2 17.67 2 18.5v-9C2 8.67 2.67 8 3.5 8S5 8.67 5 9.5v9c0 .83-.67 1.5-1.5 1.5zm17 0c-.83 0-1.5-.67-1.5-1.5v-9c0-.83.67-1.5 1.5-1.5S22 8.67 22 9.5v9c0 .83-.67 1.5-1.5 1.5zM15.53 2.16l1.3-1.3c.2-.2.2-.51 0-.71-.2-.2-.51-.2-.71 0l-1.48 1.48C13.85 1.23 12.95 1 12 1c-.96 0-1.86.23-2.66.63L7.85.15c-.2-.2-.51-.2-.71 0-.2.2-.2.51 0 .71l1.31 1.31C6.97 3.26 6 5.01 6 7h12c0-1.99-.97-3.75-2.47-4.84zM10 5H9V4h1v1zm5 0h-1V4h1v1z"/></svg>
+          Android
+        </button>
+        <button class="device-btn" id="btnIos" onclick="selectDevice('ios')">
+          <svg viewBox="0 0 24 24" fill="var(--muted)"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          iOS
+        </button>
+      </div>
+      <div class="input-wrap">
+        <div class="crosshair-sm"><div class="crosshair-sm-circle"></div></div>
+        <input type="text" id="deviceInput" placeholder="Ex: Samsung A15, iPhone 15..." oninput="updateDeviceHint()" autocomplete="off">
+      </div>
+      <div id="deviceDetect" style="font-size:11px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;font-weight:700;min-height:16px;margin:-8px 0 12px 4px;transition:color 0.2s;"></div>
+      <div class="field-error" id="errDevice">⚠ Selecione o sistema e informe seu dispositivo</div>
+      <button class="btn-primary" onclick="goPage2()">
+        CONTÍNUO
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="9 18 15 12 9 6"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- PÁGINA 2 -->
+  <div class="page" id="page2">
+    <div class="page-title">
+      <h2><span class="red">AJUSTA</span> TU ESTILO</h2>
+      <p id="deviceInfoLabel">ANDROID · </p>
+    </div>
+    <div class="page-content">
+      <div class="option-list" id="optionsContainer"></div>
+      <div class="field-error" id="errSens">⚠ Selecione um nível de sensibilidade</div>
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="goPage1()">ATRÁS</button>
+        <button class="btn-primary" onclick="goPage3()">
+          GERAR
+          <div class="crosshair-sm" style="border:none;"><div class="crosshair-sm-circle"></div></div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PÁGINA 3 -->
+  <div class="page" id="page3">
+    <div class="page-title">
+      <h2>SUA <span class="red">SENSIBILIDADE</span></h2>
+      <p id="deviceResultLabel">ANDROID · </p>
+    </div>
+    <div class="page-content">
+      <div class="result-card" id="resultCard"></div>
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="copiarSensibilidade()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:6px;"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          COPIAR
+        </button>
+        <button class="btn-primary" onclick="generateResult()">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:4px;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          NOVA
+        </button>
+      </div>
+      <button class="btn-download" onclick="baixarImagem()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        BAIXAR IMAGEM
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ SENSIBILIDADE COPIADA!</div>
+
+<script>
+// ==================== LOGIN ====================
+const JSONBIN_BIN_ID  = '69b1c0d1aa77b81da9d83020';
+const JSONBIN_API_KEY = '$2a$10$KTTH5cxrlA7D0ZIfXbwbo.RjLhtjFfEg3zEOF6Qwqd8nQ6FgI5LdK';
+const JSONBIN_URL     = 'https://api.jsonbin.io/v3/b/' + JSONBIN_BIN_ID;
+
+function getDeviceId(){
+  let id = localStorage.getItem('kingff_did');
+  if(!id){
+    id = 'D' + Date.now().toString(36).toUpperCase() + Math.random().toString(36).substr(2,8).toUpperCase();
+    localStorage.setItem('kingff_did', id);
+  }
+  return id;
+}
+async function fetchBin(){
+  const r = await fetch(JSONBIN_URL+'/latest',{method:'GET',headers:{'X-Master-Key':JSONBIN_API_KEY,'X-Bin-Meta':'false'}});
+  if(!r.ok) throw new Error('fetch_'+r.status);
+  return await r.json();
+}
+async function saveBin(data){
+  const r = await fetch(JSONBIN_URL,{method:'PUT',headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_API_KEY},body:JSON.stringify(data)});
+  if(!r.ok) throw new Error('save_'+r.status);
+}
+async function checarSessaoSalva(){
+  const keySalva = localStorage.getItem('kingff_key');
+  const devId = getDeviceId();
+  if(!keySalva) return;
+  try{
+    const dados = await fetchBin();
+    const info = dados&&dados.keys ? dados.keys[keySalva] : null;
+    if(info&&info.ativa&&info.deviceId===devId&&!(info.expiry&&Date.now()>info.expiry)){
+      entrarNoApp();
+    } else { localStorage.removeItem('kingff_key'); }
+  } catch(e){ if(localStorage.getItem('kingff_key')) entrarNoApp(); }
+}
+function onKeyInput(){
+  const msg=document.getElementById('loginMsg');
+  msg.textContent=''; msg.className='login-msg info';
+}
+async function verificarKey(){
+  const input=document.getElementById('keyInput');
+  const msg=document.getElementById('loginMsg');
+  const wrap=document.getElementById('loginInputWrap');
+  const btn=document.querySelector('.login-btn');
+  const key=input.value.trim().toUpperCase();
+  if(!key){msg.textContent='Coloque a key correta';msg.className='login-msg erro';sacudir(wrap);return;}
+  btn.textContent='VERIFICANDO...';btn.style.opacity='0.7';btn.style.pointerEvents='none';
+  try{
+    const dados=await fetchBin();
+    const devId=getDeviceId();
+    if(!dados||!dados.keys){resetBtn(btn);msg.textContent='Erro ao conectar. Tente novamente.';msg.className='login-msg erro';return;}
+    const info=dados.keys[key];
+    if(!info){resetBtn(btn);msg.textContent='Key Incorreta';msg.className='login-msg erro';input.value='';sacudir(wrap);return;}
+    if(!info.ativa){resetBtn(btn);msg.textContent='Esta key foi desativada';msg.className='login-msg erro';input.value='';sacudir(wrap);return;}
+    if(info.expiry&&Date.now()>info.expiry){resetBtn(btn);msg.textContent='Esta key expirou';msg.className='login-msg erro';input.value='';sacudir(wrap);return;}
+    if(info.deviceId&&info.deviceId!==devId){resetBtn(btn);msg.textContent='Esta key ja esta em uso';msg.className='login-msg erro';input.value='';sacudir(wrap);return;}
+    if(!info.deviceId){dados.keys[key].deviceId=devId;await saveBin(dados);}
+    localStorage.setItem('kingff_key',key);
+    msg.textContent='Key correta';msg.className='login-msg sucesso';resetBtn(btn);
+    setTimeout(entrarNoApp,900);
+  } catch(err){
+    resetBtn(btn);
+    const keySalva=localStorage.getItem('kingff_key');
+    if(keySalva&&keySalva===key){msg.textContent='Key correta';msg.className='login-msg sucesso';setTimeout(entrarNoApp,900);}
+    else{msg.textContent='Erro de conexao. Verifique sua internet.';msg.className='login-msg erro';}
+  }
+}
+function sacudir(el){el.classList.add('login-shake');setTimeout(()=>el.classList.remove('login-shake'),400);}
+function resetBtn(btn){btn.textContent='ACESSAR';btn.style.opacity='1';btn.style.pointerEvents='auto';}
+function entrarNoApp(){
+  const ls=document.getElementById('loginScreen');
+  ls.style.transition='opacity 0.5s';ls.style.opacity='0';
+  setTimeout(()=>{ls.style.display='none';document.getElementById('mainApp').style.display='block';initAppBg();},500);
+}
+window.addEventListener('load',checarSessaoSalva);
+
+// ==================== MENU ====================
+function toggleMenu(){
+  const m=document.getElementById('dropMenu');
+  m.style.display=m.style.display==='none'?'block':'none';
+}
+function voltarInicio(){
+  document.getElementById('dropMenu').style.display='none';
+  state.device=null;state.deviceName='';state.includeDPI=false;
+  state.includeButton=false;state.sensLevel=null;state.sensWeight=null;state.result=null;
+  document.getElementById('btnAndroid').classList.remove('selected');
+  document.getElementById('btnIos').classList.remove('selected');
+  document.getElementById('deviceInput').value='';
+  document.getElementById('deviceDetect').textContent='';
+  showPage(1);
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.menu-btn')&&!e.target.closest('#dropMenu')){
+    const m=document.getElementById('dropMenu');
+    if(m) m.style.display='none';
+  }
+});
+
+// ==================== ESTADO ====================
+let state={
+  device:null,
+  deviceName:'',
+  includeDPI:false,
+  includeButton:false,
+  sensLevel:null,   // 'high'|'mid'|'low'
+  sensWeight:null,  // 'leve'|'pesada'
+  result:null
+};
+
+// ==================== FUNDO ANIMADO ====================
+function initBg(canvasId){
+  const canvas=document.getElementById(canvasId);
+  if(!canvas) return;
+  const ctx=canvas.getContext('2d');
+  let particles=[];
+  let W,H;
+  function resize(){W=canvas.width=window.innerWidth;H=canvas.height=window.innerHeight;}
+  resize();
+  window.addEventListener('resize',resize);
+  function randomColor(){
+    const hue=Math.random()>0.5?Math.floor(Math.random()*30):Math.floor(Math.random()*10)+350;
+    return `hsla(${hue},90%,55%,`;
+  }
+  function createParticle(){
+    return{x:Math.random()*W,y:H+10,r:Math.random()*2.5+0.5,speed:Math.random()*0.6+0.2,
+      opacity:Math.random()*0.5+0.1,color:randomColor(),drift:(Math.random()-0.5)*0.3};
+  }
+  for(let i=0;i<40;i++){const p=createParticle();p.y=Math.random()*H;particles.push(p);}
+  let blobs=[
+    {x:W*0.5,y:H*0.1,r:200,phase:0,speed:0.003},
+    {x:W*0.2,y:H*0.8,r:150,phase:1.5,speed:0.004},
+    {x:W*0.85,y:H*0.5,r:120,phase:3,speed:0.005},
+  ];
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    blobs.forEach(b=>{
+      b.phase+=b.speed;
+      const pulse=Math.sin(b.phase)*0.3+0.7;
+      const gr=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r*pulse);
+      gr.addColorStop(0,'rgba(180,10,10,0.12)');gr.addColorStop(1,'rgba(0,0,0,0)');
+      ctx.fillStyle=gr;ctx.beginPath();ctx.arc(b.x,b.y,b.r*pulse,0,Math.PI*2);ctx.fill();
+    });
+    if(Math.random()<0.15) particles.push(createParticle());
+    particles=particles.filter(p=>p.y>-20);
+    particles.forEach(p=>{
+      p.y-=p.speed;p.x+=p.drift;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle=p.color+p.opacity+')';ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  draw();
+  window.addEventListener('resize',()=>{resize();blobs[0].x=W*0.5;blobs[0].y=H*0.1;blobs[1].x=W*0.2;blobs[1].y=H*0.8;blobs[2].x=W*0.85;blobs[2].y=H*0.5;});
+}
+initBg('loginCanvas');
+function initAppBg(){initBg('particleCanvas');}
+
+// ==================== NAVEGAÇÃO ====================
+function showPage(n){
+  document.querySelectorAll('.page').forEach((p,i)=>p.classList.toggle('active',i===n-1));
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i<n));
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function goPage1(){showPage(1);}
+function goPage2(){
+  const err=document.getElementById('errDevice');
+  if(!state.device||!document.getElementById('deviceInput').value.trim()){err.classList.add('show');return;}
+  err.classList.remove('show');
+  state.deviceName=document.getElementById('deviceInput').value.trim().toUpperCase();
+  renderOptions();
+  document.getElementById('deviceInfoLabel').textContent=(state.device==='android'?'ANDROID':'IOS')+' · '+state.deviceName;
+  showPage(2);
+}
+function goPage3(){
+  const err=document.getElementById('errSens');
+  if(!state.sensLevel){err.classList.add('show');return;}
+  err.classList.remove('show');
+  generateResult();
+  document.getElementById('deviceResultLabel').textContent=(state.device==='android'?'ANDROID':'IOS')+' · '+state.deviceName;
+  showPage(3);
+}
+function selectDevice(d){
+  state.device=d;
+  document.getElementById('btnAndroid').classList.toggle('selected',d==='android');
+  document.getElementById('btnIos').classList.toggle('selected',d==='ios');
+  document.getElementById('deviceInput').placeholder=d==='android'?'Ex: Samsung S25, Xiaomi 15...':'Ex: iPhone 17, iPhone 16 Pro...';
+  updateDeviceHint();
+}
+function updateDeviceHint(){
+  document.getElementById('errDevice').classList.remove('show');
+  const el=document.getElementById('deviceDetect');
+  const val=document.getElementById('deviceInput').value.trim();
+  if(!val||!state.device){el.textContent='';return;}
+  const prof=analisarAparelho(val,state.device==='ios');
+  const score=prof.mod;
+  let label,color;
+  if(score>=18){label='🔥 Aparelho Topo de Linha detectado';color='#e02020';}
+  else if(score>=9){label='⚡ Aparelho Intermediário-Alto detectado';color='#ff9a3d';}
+  else if(score>=2){label='📱 Aparelho Intermediário detectado';color='#22c55e';}
+  else {label='🔧 Aparelho de Entrada detectado';color='#888';}
+  el.textContent=label;
+  el.style.color=color;
+}
+
+// ==================== OPÇÕES ====================
+function renderOptions(){
+  const c=document.getElementById('optionsContainer');
+  state.includeDPI=false;state.includeButton=false;state.sensLevel=null;state.sensWeight=null;
+  c.innerHTML=`
+    <div class="options-section-label">⚙ EXTRAS (opcional)</div>
+    <div class="option-item" id="opt-dpi" onclick="toggleCheck('dpi')">
+      <div class="radio-circle"></div>
+      <div class="option-text"><strong>Incluir DPI</strong><small>Pontos por polegada otimizados (384 – 960)</small></div>
+    </div>
+    <div class="option-item" id="opt-btn" onclick="toggleCheck('btn')">
+      <div class="radio-circle"></div>
+      <div class="option-text"><strong>Botão de disparo</strong><small>Tamanho do botão do jogo (0 – 100)</small></div>
+    </div>
+
+    <div class="options-section-label" style="margin-top:6px;">🎯 NÍVEL — escolha 1</div>
+    <div class="option-item" id="opt-high" onclick="selectSens('high')">
+      <div class="radio-circle"></div>
+      <div class="option-text"><strong>Sensibilidade Alta</strong><small>Movimentos rápidos e agressivos</small></div>
+    </div>
+    <div class="option-item" id="opt-mid" onclick="selectSens('mid')">
+      <div class="radio-circle"></div>
+      <div class="option-text"><strong>Sensibilidade Média</strong><small>Equilíbrio entre velocidade e precisão</small></div>
+    </div>
+    <div class="option-item" id="opt-low" onclick="selectSens('low')">
+      <div class="radio-circle"></div>
+      <div class="option-text"><strong>Sensibilidade Baixa</strong><small>Controle preciso, fluido e calibrado</small></div>
+    </div>
+
+    <div class="options-section-label" style="margin-top:6px;">⚖ TIPO — escolha 1 (opcional)</div>
+    <div class="option-item" id="opt-leve" onclick="selectWeight('leve')">
+      <div class="radio-circle"></div>
+      <div class="option-text"><strong>Sensibilidade Leve</strong><small>Deslize suave, ágil, sem tremor</small></div>
+    </div>
+    <div class="option-item" id="opt-pesada" onclick="selectWeight('pesada')">
+      <div class="radio-circle"></div>
+      <div class="option-text"><strong>Sensibilidade Pesada</strong><small>Firme, plantada, máximo controle</small></div>
+    </div>
+  `;
+}
+function toggleCheck(type){
+  if(type==='dpi'){state.includeDPI=!state.includeDPI;document.getElementById('opt-dpi').classList.toggle('checked',state.includeDPI);}
+  else if(type==='btn'){state.includeButton=!state.includeButton;document.getElementById('opt-btn').classList.toggle('checked',state.includeButton);}
+}
+function selectSens(level){
+  state.sensLevel=level;
+  ['high','mid','low'].forEach(l=>{const el=document.getElementById('opt-'+l);if(el)el.classList.toggle('checked',l===level);});
+  document.getElementById('errSens').classList.remove('show');
+}
+function selectWeight(w){
+  // Só uma: se clicar na mesma, deseleciona
+  if(state.sensWeight===w){ state.sensWeight=null; document.getElementById('opt-'+w).classList.remove('checked'); return; }
+  state.sensWeight=w;
+  ['leve','pesada'].forEach(x=>{const el=document.getElementById('opt-'+x);if(el)el.classList.toggle('checked',x===w);});
+}
+
+// ==================== GERADOR CALIBRADO ====================
+function rnd(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
+
+// DPI SEMPRE 384–960 para todos os níveis
+function clampDpi(v){return Math.min(Math.max(Math.round(v),384),960);}
+
+/*
+  ANÁLISE INTELIGENTE DE APARELHO
+  Em vez de uma lista fixa de modelos, o motor interpreta o texto que o
+  jogador digitar (marca, linha, sufixo Ultra/Pro/Max/Lite/GT/Neo/FE etc.
+  e o número do modelo) e calcula uma "pontuação de hardware" (score).
+  Isso permite gerar uma sensibilidade coerente para QUALQUER aparelho,
+  inclusive lançamentos novíssimos que ainda nem existiam quando este
+  motor foi calibrado — sem precisar cadastrar cada modelo manualmente.
+
+  score  → o quão "forte" é o aparelho (tela, chip, resposta ao toque)
+  mod    → modificador de sensibilidade (+/-) derivado do score
+  dpiH/M/L → DPI base por nível de sensibilidade (sempre dentro de 384-960)
+*/
+function clampNum(v,min,max){return Math.min(Math.max(v,min),max);}
+
+function analisarAparelho(texto,isIos){
+  const d=' '+texto.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')+' ';
+  let score=0, dpiBase=600;
+
+  if(isIos){
+    dpiBase=760; score+=10;
+    const gm=d.match(/(\d{1,2})/);
+    const gen=gm?parseInt(gm[1],10):14;
+    score+=clampNum((gen-11)*2.6,-6,17);
+    if(d.includes('pro max')) score+=7;
+    else if(d.includes(' pro ')) score+=4;
+    else if(d.includes('plus')||d.includes('+')) score+=3;
+    else if(d.includes('air')) score+=2;
+    else if(d.includes('mini')) score-=2;
+    if(/\d+e\b/.test(d)||d.includes(' se ')) score-=4;
+  } else {
+    // Baseline por fabricante/ecossistema (chip + otimização p/ jogos)
+    if(/rog phone|asus rog|redmagic|red magic|black shark|iqoo|nubia/.test(d)){score+=13;dpiBase=780;}
+    else if(/samsung|galaxy/.test(d)){score+=8;dpiBase=680;}
+    else if(/xiaomi|redmi|poco|mi \d/.test(d)){score+=7;dpiBase=650;}
+    else if(/oppo|realme|oneplus|find x|vivo|honor|motorola|moto /.test(d)){score+=6;dpiBase=630;}
+    else if(/huawei|nova |mate |lg |nokia/.test(d)){score+=4;dpiBase=600;}
+    else if(/infinix|tecno|positivo|multilaser|nothing/.test(d)){score+=2;dpiBase=560;}
+    else {score+=3;dpiBase=600;}
+
+    // Palavras-chave de linha/variante (podem se somar)
+    if(d.includes('ultra')) score+=10;
+    if(/\bgt\b/.test(d)) score+=8;
+    if(d.includes('pro max')) score+=9;
+    else if(d.includes(' pro ')||d.includes('pro ')) score+=6;
+    if(d.includes('plus')||d.includes('+')) score+=3;
+    if(d.includes('neo')) score+=4;
+    if(d.includes(' fe ')) score+=3;
+    if(/\bmax\b/.test(d)) score+=4;
+    if(d.includes('turbo')||d.includes('racing')) score+=3;
+    if(d.includes('5g')) score+=1;
+    if(d.includes('lite')) score-=4;
+    if(/\bse\b/.test(d)) score-=3;
+    if(d.includes('mini')) score-=2;
+    if(/\bgo\b/.test(d)) score-=6;
+    if(d.includes('c ')||/\bc\d/.test(d)) score-=2;
+
+    // Número do modelo/geração (quanto mais alto/recente, maior o score)
+    const nums=(d.match(/\d{1,3}/g)||[]).map(Number).filter(n=>n>0&&n<300);
+    if(nums.length){
+      const n=Math.max(...nums);
+      if(n<=30) score+=clampNum((n-10)*0.6,-6,13);
+      else score+=clampNum((n-100)*0.08,-4,10);
+    }
+  }
+
+  score=clampNum(score,-8,32);
+  const dpiH=clampDpi(dpiBase+score*9);
+  const dpiM=clampDpi(dpiH*0.77);
+  const dpiL=clampDpi(dpiH*0.55);
+  return{mod:Math.round(score)+rnd(-2,2),dpiH,dpiM,dpiL};
+}
+
+function getDeviceProfile(d,isIos){
+  return analisarAparelho(d,isIos);
+}
+
+function genSensibilidade(level,weight,includeDPI,includeButton,deviceName,isIos){
+  const d=deviceName.toLowerCase();
+  const prof=getDeviceProfile(d,isIos);
+  const mod=prof.mod;
+
+  // BASE POR NÍVEL — recalibrado p/ OB55 (Set/2026).
+  // A OB55 trouxe rebalanceamento de recuo em SMGs, shotguns automáticas (ex.: FO12),
+  // rifles e snipers, além de ajuste fino no sistema de mira/ADS. Isso pede giro um pouco
+  // mais controlado na mira aberta e ganho extra nas miras 2x/4x e francoatirador para
+  // compensar o novo tempo de recuperação de recuo. Faixas também foram estreitadas
+  // (menor dispersão do rnd) para entregar resultados mais consistentes e "fechados".
+  let base={};
+  if(level==='high'){
+    base={geral:rnd(160,184),pontoR:rnd(152,182),mira2x:rnd(166,196),mira4x:rnd(172,200),franco:rnd(176,200),cam3rd:rnd(160,188)};
+  } else if(level==='mid'){
+    base={geral:rnd(114,140),pontoR:rnd(110,138),mira2x:rnd(122,152),mira4x:rnd(128,158),franco:rnd(132,164),cam3rd:rnd(116,146)};
+  } else {
+    // BAIXO: valores funcionais e eficientes no FF, nunca abaixo de 70
+    base={geral:rnd(78,98),pontoR:rnd(74,96),mira2x:rnd(84,108),mira4x:rnd(88,113),franco:rnd(92,117),cam3rd:rnd(79,101)};
+  }
+
+  // Aplicar modificador de hardware
+  Object.keys(base).forEach(k=>{base[k]=Math.min(Math.max(base[k]+mod,0),200);});
+
+  // Aplicar peso LEVE ou PESADA
+  if(weight){
+    const wDelta=weight==='leve'?rnd(5,11):rnd(-11,-5);
+    Object.keys(base).forEach(k=>{base[k]=Math.min(Math.max(base[k]+wDelta,0),200);});
+  }
+
+  const rows=[
+    {label:'EM GERAL',   val:base.geral,  max:200},
+    {label:'PONTO RUBI', val:base.pontoR, max:200},
+    {label:'MIRA 2X',    val:base.mira2x, max:200},
+    {label:'MIRA 4X',    val:base.mira4x, max:200},
+    {label:'FRANCOATIR.',val:base.franco,  max:200},
+    {label:'CÂMARA 3ª.', val:base.cam3rd, max:200},
+  ];
+
+  if(isIos){
+    const renderMode=level==='high'?'Mais Rápida':level==='mid'?'Mais Suave':'Mais Precisa';
+    rows.push({label:'RENDERIZAÇÃO',val:renderMode,max:null});
+  }
+
+  if(includeDPI){
+    // Selecionar DPI base pelo nível
+    let dpiRaw;
+    if(level==='high')     dpiRaw=prof.dpiH;
+    else if(level==='mid') dpiRaw=prof.dpiM;
+    else                   dpiRaw=prof.dpiL;
+
+    // LEVE = DPI menor (mais responsivo), PESADA = DPI maior (mais firme)
+    const dpiWeightDelta=weight==='leve'?rnd(-28,-8):weight==='pesada'?rnd(8,28):0;
+    const dpiVar=rnd(-12,12); // variação natural pequena
+    const dpiFinal=clampDpi(dpiRaw+dpiWeightDelta+dpiVar);
+    rows.push({label:'DPI',val:dpiFinal,max:960});
+  }
+
+  if(includeButton){
+    let bv;
+    if(level==='high')     bv=rnd(55,72);
+    else if(level==='mid') bv=rnd(40,54);
+    else                   bv=rnd(28,42);
+    if(weight==='leve')  bv=Math.max(bv-rnd(2,5),20);
+    if(weight==='pesada') bv=Math.min(bv+rnd(2,5),80);
+    rows.push({label:'DISPARO',val:bv,max:100});
+  }
+
+  return rows;
+}
+
+function generateResult(){
+  const isIos=state.device==='ios';
+  const rows=genSensibilidade(
+    state.sensLevel,state.sensWeight,
+    state.includeDPI,state.includeButton,
+    state.deviceName,isIos
+  );
+  state.result=rows;
+  renderResult(rows);
+}
+
+// ==================== RENDER RESULTADO ====================
+function renderResult(rows){
+  const card=document.getElementById('resultCard');
+  const weightBadge=state.sensWeight==='leve'
+    ?'<span class="sens-type-badge badge-leve">⚡ LEVE</span>'
+    :state.sensWeight==='pesada'
+    ?'<span class="sens-type-badge badge-pesada">🏋 PESADA</span>'
+    :'';
+  const nivelLabel=state.sensLevel==='high'?'ALTA':state.sensLevel==='mid'?'MÉDIA':'BAIXA';
+
+  const header=`<div style="text-align:center;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);">
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:13px;letter-spacing:4px;color:var(--muted);">
+      NÍVEL <span style="color:#fff;">${nivelLabel}</span>${weightBadge}
+    </div>
+    <div style="margin-top:6px;font-size:9px;letter-spacing:2px;color:#22c55e;font-weight:700;text-transform:uppercase;">● Versão OB55 · Set/2026</div>
+  </div>`;
+
+  const rowsHtml=rows.map((r,i)=>{
+    const isText=typeof r.val==='string';
+    const maxVal=r.max!==null&&r.max!==undefined?r.max:200;
+    const pct=isText?100:Math.min(Math.round((r.val/maxVal)*100),100);
+    const delay=i*80;
+    if(isText){
+      return `<div class="result-row" style="animation-delay:${delay}ms">
+        <span class="result-label">${r.label}</span>
+        <div class="result-bar-wrap"><div class="result-bar" style="--w:100%;width:100%;background:linear-gradient(90deg,#444,#777);animation-delay:${delay}ms"></div></div>
+        <span class="result-val" style="font-size:15px;letter-spacing:1px;color:#ccc;">${r.val}</span>
+      </div>`;
+    }
+    return `<div class="result-row" style="animation-delay:${delay}ms">
+      <span class="result-label">${r.label}</span>
+      <div class="result-bar-wrap"><div class="result-bar" style="--w:${pct}%;width:${pct}%;animation-delay:${delay}ms"></div></div>
+      <span class="result-val">${r.val}</span>
+    </div>`;
+  }).join('');
+
+  card.innerHTML=header+rowsHtml;
+}
+
+// ==================== COPIAR ====================
+function copiarSensibilidade(){
+  if(!state.result) return;
+  const nivLabel=state.sensLevel==='high'?'Alta':state.sensLevel==='mid'?'Média':'Baixa';
+  const weightLabel=state.sensWeight?(state.sensWeight==='leve'?' · Leve':' · Pesada'):'';
+  const plat=state.device==='android'?'Android':'iOS';
+  const linhas=state.result.map(r=>`${r.label}: ${r.val}`).join('\n');
+  const full=`🎯 KING FF - Sensibilidade ${nivLabel}${weightLabel}\n📱 ${plat} · ${state.deviceName}\n🆙 Versão OB55 · Set/2026\n\n${linhas}`;
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(full).then(()=>showToast('✓ SENSIBILIDADE COPIADA!')).catch(()=>fallbackCopy(full));
+  } else { fallbackCopy(full); }
+}
+function fallbackCopy(text){
+  const ta=document.createElement('textarea');
+  ta.value=text;ta.style.cssText='position:fixed;opacity:0;top:0;left:0;';
+  document.body.appendChild(ta);ta.focus();ta.select();
+  try{document.execCommand('copy');showToast('✓ SENSIBILIDADE COPIADA!');}
+  catch(e){showToast('⚠ Segure o texto p/ copiar');}
+  document.body.removeChild(ta);
+}
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ==================== BAIXAR IMAGEM ====================
+function baixarImagem(){
+  if(!state.result){showToast('⚠ Gere a sensibilidade primeiro');return;}
+
+  const W=820,H=Math.max(480,120+state.result.length*44+80);
+  const canvas=document.createElement('canvas');
+  canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d');
+
+  // FUNDO
+  const bgGrad=ctx.createLinearGradient(0,0,W,H);
+  bgGrad.addColorStop(0,'#090909');
+  bgGrad.addColorStop(0.45,'#120606');
+  bgGrad.addColorStop(1,'#090909');
+  ctx.fillStyle=bgGrad;ctx.fillRect(0,0,W,H);
+
+  // Glows radiais
+  [{x:0,y:H*0.5,r:360},{x:W,y:H*0.1,r:280},{x:W*0.5,y:0,r:320}].forEach(g=>{
+    const gl=ctx.createRadialGradient(g.x,g.y,0,g.x,g.y,g.r);
+    gl.addColorStop(0,'rgba(200,20,20,0.16)');gl.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=gl;ctx.fillRect(0,0,W,H);
+  });
+
+  // Grade de pontos decorativa
+  ctx.fillStyle='rgba(255,255,255,0.03)';
+  for(let x=24;x<W;x+=38) for(let y=24;y<H;y+=38){
+    ctx.beginPath();ctx.arc(x,y,1.1,0,Math.PI*2);ctx.fill();
+  }
+
+  // Borda vermelha com cantos arredondados
+  ctx.strokeStyle='rgba(220,30,30,0.55)';ctx.lineWidth=2.5;
+  roundRect(ctx,2,2,W-4,H-4,14);ctx.stroke();
+
+  // Linha superior brilhante
+  const lineG=ctx.createLinearGradient(0,0,W,0);
+  lineG.addColorStop(0,'rgba(224,32,32,0)');
+  lineG.addColorStop(0.3,'rgba(255,80,80,0.9)');
+  lineG.addColorStop(0.7,'rgba(255,80,80,0.9)');
+  lineG.addColorStop(1,'rgba(224,32,32,0)');
+  ctx.strokeStyle=lineG;ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(0,62);ctx.lineTo(W,62);ctx.stroke();
+
+  // ---- TÍTULO KING FF ----
+  ctx.save();
+  ctx.shadowColor='rgba(255,50,50,1)';ctx.shadowBlur=50;
+  ctx.font='bold 70px "Bebas Neue",serif';ctx.textAlign='center';
+  // KING branco
+  ctx.fillStyle='#ffffff';
+  ctx.fillText('KING',W/2-64,50);
+  // FF vermelho
+  ctx.fillStyle='#ff2222';
+  ctx.fillText('FF',W/2+70,50);
+  ctx.restore();
+
+  // Subtítulo
+  ctx.font='700 12px "Rajdhani",sans-serif';
+  ctx.fillStyle='rgba(255,255,255,0.32)';
+  ctx.textAlign='center';
+  ctx.fillText('◆  MOTOR DE SENSIBILIDADE · VERSÃO OB55  ◆',W/2,72);
+
+  // Info dispositivo
+  const plat=state.device==='android'?'ANDROID':'iOS';
+  const nivelLabel=state.sensLevel==='high'?'ALTA':state.sensLevel==='mid'?'MÉDIA':'BAIXA';
+  const weightTxt=state.sensWeight?' · '+state.sensWeight.toUpperCase():'';
+  ctx.font='600 12px "Rajdhani",sans-serif';
+  ctx.fillStyle='rgba(255,255,255,0.42)';
+  ctx.fillText(`${plat}  ·  ${state.deviceName}  ·  SENSIBILIDADE ${nivelLabel}${weightTxt}`,W/2,90);
+
+  // ---- LINHAS DE RESULTADO ----
+  const rowH=44;
+  const startY=114;
+  const colLabel=62,colBarX=230,colBarW=390,colVal=750;
+
+  state.result.forEach((r,i)=>{
+    const y=startY+i*rowH+rowH*0.62;
+    const isText=typeof r.val==='string';
+    const maxVal=r.max!==null&&r.max!==undefined?r.max:200;
+    const pct=isText?1:Math.min(r.val/maxVal,1);
+
+    // Zebra
+    if(i%2===0){
+      ctx.fillStyle='rgba(255,255,255,0.022)';
+      ctx.fillRect(36,startY+i*rowH+2,W-72,rowH-4);
+    }
+
+    // Label
+    ctx.font='600 11px "Rajdhani",sans-serif';
+    ctx.fillStyle='rgba(255,255,255,0.42)';
+    ctx.textAlign='left';
+    ctx.letterSpacing='2px';
+    ctx.fillText(r.label.toUpperCase(),colLabel,y);
+
+    // Barra fundo
+    ctx.fillStyle='rgba(255,255,255,0.07)';
+    ctx.beginPath();
+    if(ctx.roundRect) ctx.roundRect(colBarX,y-11,colBarW,5,3);
+    else ctx.rect(colBarX,y-11,colBarW,5);
+    ctx.fill();
+
+    // Barra preenchida
+    if(pct>0){
+      const filledW=colBarW*pct;
+      const bGrad=ctx.createLinearGradient(colBarX,0,colBarX+filledW,0);
+      bGrad.addColorStop(0,'#c01010');bGrad.addColorStop(1,'#ff4444');
+      ctx.fillStyle=bGrad;
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(colBarX,y-11,filledW,5,3);
+      else ctx.rect(colBarX,y-11,filledW,5);
+      ctx.fill();
+      // reflexo topo
+      ctx.fillStyle='rgba(255,255,255,0.28)';
+      ctx.beginPath();
+      if(ctx.roundRect) ctx.roundRect(colBarX,y-11,filledW,2,2);
+      else ctx.rect(colBarX,y-11,filledW,2);
+      ctx.fill();
+    }
+
+    // Valor
+    ctx.textAlign='right';
+    if(isText){
+      ctx.font='600 13px "Rajdhani",sans-serif';
+      ctx.fillStyle='rgba(200,200,200,0.8)';
+      ctx.fillText(r.val,colVal,y);
+    } else {
+      ctx.save();
+      ctx.shadowColor='rgba(255,60,60,0.7)';ctx.shadowBlur=10;
+      ctx.font='bold 22px "Bebas Neue",serif';
+      ctx.fillStyle='#ffffff';
+      ctx.fillText(r.val,colVal,y);
+      ctx.restore();
+    }
+  });
+
+  // Linha rodapé
+  ctx.strokeStyle=lineG;ctx.lineWidth=2;
+  const footerY=H-36;
+  ctx.beginPath();ctx.moveTo(0,footerY);ctx.lineTo(W,footerY);ctx.stroke();
+
+  // Texto rodapé
+  ctx.font='600 11px "Rajdhani",sans-serif';
+  ctx.fillStyle='rgba(255,255,255,0.2)';
+  ctx.textAlign='center';
+  ctx.fillText('🎯  KING FF  ·  Gerador de Sensibilidade Free Fire',W/2,H-14);
+
+  // Faíscas decorativas
+  [[55,H-50],[W-55,H-50],[55,100],[W-55,100],[W*0.5,H-58]].forEach(([sx,sy])=>{
+    const sg=ctx.createRadialGradient(sx,sy,0,sx,sy,14);
+    sg.addColorStop(0,'rgba(255,80,80,0.55)');sg.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=sg;ctx.beginPath();ctx.arc(sx,sy,14,0,Math.PI*2);ctx.fill();
+  });
+
+  // DOWNLOAD
+  canvas.toBlob(blob=>{
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download='KING_FF_sensibilidade.png';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('✓ IMAGEM SALVA!');
+  },'image/png');
+}
+
+// Helper roundRect para compatibilidade
+function roundRect(ctx,x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+</script>
+</body>
+</html>
